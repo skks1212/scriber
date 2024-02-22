@@ -1,0 +1,63 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+    //directUrl = env("DATABASE_URL_NON_POOLING")
+}
+
+enum Difficulty {
+    EASY
+    MEDIUM
+    HARD
+}
+
+model User {
+    id                  String        @id @default(uuid())
+    email               String        @unique
+    username            String        @unique
+    account_setup       Boolean       @default(false)
+    vishnu_id           String        @unique
+    profile_picture_url String?
+    createdAt           DateTime      @default(now())
+    updatedAt           DateTime      @updatedAt
+    createdGames        GameSession[]
+    playedGames         Player[]
+    logins              Login[]
+}
+
+model Login {
+    id           String   @id @default(uuid())
+    user         User?    @relation(fields: [userId], references: [id])
+    userId       String?
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
+    success      Boolean  @default(false)
+    token        String?
+    serviceToken String
+}
+
+model GameSession {
+    id          String     @id @default(uuid())
+    createdAt   DateTime   @default(now())
+    creator     User       @relation(fields: [creatorId], references: [id])
+    creatorId   String
+    url         String
+    difficulty  Difficulty @default(EASY)
+    customWords String[]
+    players     Player[]
+    updatedAt   DateTime   @updatedAt
+}
+
+model Player {
+    id            String      @id @default(uuid())
+    user          User        @relation(fields: [userId], references: [id])
+    userId        String
+    gameSession   GameSession @relation(fields: [gameSessionId], references: [id])
+    gameSessionId String
+    score         Int
+    createdAt     DateTime    @default(now())
+    updatedAt     DateTime    @updatedAt
+}
