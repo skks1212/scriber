@@ -30,7 +30,7 @@ export default function RootLayout({
       <head>
         <Script src="https://www.writeroo.net/fawesome.js" strategy="beforeInteractive" />
       </head>
-      <body className={inter.className}>
+      <body className={`${inter.className} bg-black text-white`}>
         <Providers initialStorage={storage}>
           {children}
         </Providers>

@@ -1,31 +1,23 @@
-import { Prisma } from "@prisma/client";
-import { NextRequest, NextResponse } from "next/server";
 import prisma from "./prisma";
+import { cookies } from "next/headers";
+import { Storage } from "@/types/storage";
 
-export const getUser = async (req: NextRequest) => {
-    const authorization = req.headers.get("Authorization");
-    if (!authorization) {
-        NextResponse.json({
-            error: "No Authorization header found",
-        }, {
-            status: 401,
-        });
-        return false;
-    }
-    const token = authorization.replace("Token ", "");
+export const getUser = async () => {
+    const cookieStore = cookies();
+    const cookie = cookieStore.get(
+        process.env.NEXT_PUBLIC_STORAGE_COOKIE || "storage"
+    );
+    const storage = JSON.parse(cookie?.value || "{}") as Storage;
+
     const login = await prisma.login.findFirst({
         where: {
-            token: token,
+            token: storage.authToken,
+            success: true,
         },
     });
-    if (!login || !login.userId) {
-        NextResponse.json({
-            error: "Invalid Token"
-        }, {
-            status: 400,
-        });
-        return false;
-    }
+
+    if (!login || !login.userId) return null;
+
     const user = await prisma.user.findUnique({
         where: {
             id: login.userId,
@@ -33,12 +25,7 @@ export const getUser = async (req: NextRequest) => {
     });
 
     if (!user) {
-        NextResponse.json({
-            error: "User not found"
-        }, {
-            status: 400,
-        });
-        return false;
+        return null;
     }
 
     return user;

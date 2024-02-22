@@ -104,15 +104,6 @@ const request = async (
 
 export const API = {
     user: {
-        login: {
-            getToken: (data: {
-                client_url: string;
-                redirect_url?: string;
-            }) => request("auth/login", "GET", data),
-            validateToken: (data: {
-                login_token: string;
-            }) => request("auth/login", "POST", data),
-        },
-        me: () => request("users/me"),
+
     },
 };

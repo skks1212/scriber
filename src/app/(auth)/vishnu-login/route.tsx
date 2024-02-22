@@ -1,54 +1,34 @@
+import { Storage } from "@/types/storage";
 import prisma from "@/utils/prisma";
-import { NextRequest, NextResponse } from "next/server";
 import usernameGenerator from "@/assets/generators/username.json"
+
+import { cookies } from "next/headers";
 import crypto from "crypto";
-import { userSerializer } from "@/utils/serializers";
+
+import { NextRequest, NextResponse } from "next/server";
+import { redirect } from "next/navigation";
 
 export async function GET(req: NextRequest) {
-    const { searchParams } = new URL(req.url);
-    const client_url = searchParams.get("client_url");
-    const redirect_url = searchParams.get("redirect_url");
 
-    try {
+    const cookieStore = cookies();
 
-        const serviceTokenRequest = await fetch("https://auth-api.writeroo.net/servicetoken", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-API-KEY": process.env.VISHNU_API_KEY || "",
-            },
-            body: JSON.stringify({
-                success_url: client_url + "/vishnu-login?success=true&token=[token]" + (redirect_url ? ("&redirect_url=" + redirect_url) : ""),
-                failure_url: client_url + "/vishnu-login?success=false",
-            }),
-        });
+    const setStorage = (newStorage: Storage) => {
+        cookieStore.set(process.env.NEXT_PUBLIC_STORAGE_COOKIE || "storage", JSON.stringify(newStorage));
+    }
 
-        const { token: service_token, url }: { token: string, url: string } = await serviceTokenRequest.json();
+    const { searchParams } = new URL(req.url)
 
-        await prisma.login.create({
-            data: {
-                serviceToken: service_token,
-            },
-        });
+    const login_token = searchParams.get("token")
+    const success = searchParams.get("success")
 
+    if (success === "false") {
         return NextResponse.json({
-            url,
-            service_token,
-        });
-    } catch (error) {
-        console.error(error);
-        return NextResponse.json({
-            error: "Failed to initiate Vishnu Login. Please try again later."
+            error: "Login Failed"
         }, {
-            status: 500,
+            status: 400,
         });
     }
-}
 
-export async function POST(req: NextRequest) {
-    const { login_token } = await req.json();
-
-    // validate login token from Vishnu
     const userDataRequest = await fetch("https://auth-api.writeroo.net/users/token?token=" + login_token, {
         method: "GET",
         headers: {
@@ -58,7 +38,6 @@ export async function POST(req: NextRequest) {
     });
 
     const userData = await userDataRequest.json();
-    console.log(userData);
     const fetchedUser = userData.user;
     const login = await prisma.login.findFirst({
         where: {
@@ -111,9 +90,10 @@ export async function POST(req: NextRequest) {
         },
     });
 
-    return NextResponse.json({
-        token,
-        user: userSerializer(user),
+    setStorage({
+        authToken: token,
+        user,
     });
 
+    redirect("/")
 }
