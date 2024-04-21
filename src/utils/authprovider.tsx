@@ -34,7 +34,7 @@ export default function AuthProvider(props: {
     }, [storage.authToken])
 
     useEffect(() => {
-        if (storage.user && ["/login", "/vishnu-login"].includes(path)) {
+        if (storage.user && ["/login", "/vishnu-login"].includes(path || "")) {
             router.push("/")
         }
     }, [path, storage.user])

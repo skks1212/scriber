@@ -14,6 +14,12 @@ enum Difficulty {
     HARD
 }
 
+enum GameStatus {
+    WAITING
+    STARTED
+    FINISHED
+}
+
 model User {
     id                  String        @id @default(uuid())
     email               String        @unique
@@ -40,15 +46,48 @@ model Login {
 }
 
 model GameSession {
-    id          String     @id @default(uuid())
-    createdAt   DateTime   @default(now())
-    creator     User       @relation(fields: [creatorId], references: [id])
-    creatorId   String
-    url         String
-    difficulty  Difficulty @default(EASY)
-    customWords String[]
-    players     Player[]
-    updatedAt   DateTime   @updatedAt
+    id            String     @id @default(uuid())
+    createdAt     DateTime   @default(now())
+    creator       User       @relation(fields: [creatorId], references: [id])
+    creatorId     String
+    url           String
+    difficulty    Difficulty @default(EASY)
+    status        GameStatus @default(WAITING)
+    rounds        Int        @default(3)
+    drawTime      Int        @default(60)
+    hintTime      Int        @default(20)
+    hints         Int        @default(3)
+    guessCooldown Int        @default(0)
+    customWords   String[]
+    players       Player[]
+    updatedAt     DateTime   @updatedAt
+    gamerounds    Round[]
+}
+
+model Round {
+    id            String      @id @default(uuid())
+    gameSession   GameSession @relation(fields: [gameSessionId], references: [id])
+    gameSessionId String
+    wordOptions   String[]
+    word          String
+    drawer        Player      @relation(fields: [drawerId], references: [id])
+    drawerId      String
+    createdAt     DateTime    @default(now())
+    updatedAt     DateTime    @updatedAt
+    drawingData   Json
+    guesses       Guess[]
+}
+
+model Guess {
+    id        String   @id @default(uuid())
+    player    Player   @relation(fields: [playerId], references: [id])
+    playerId  String
+    round     Round    @relation(fields: [roundId], references: [id])
+    roundId   String
+    guess     String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    correct   Boolean  @default(false)
 }
 
 model Player {
@@ -60,4 +99,6 @@ model Player {
     score         Int
     createdAt     DateTime    @default(now())
     updatedAt     DateTime    @updatedAt
+    guesses       Guess[]
+    drawnRounds   Round[]
 }

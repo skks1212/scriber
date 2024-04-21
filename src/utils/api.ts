@@ -1,3 +1,6 @@
+import { Storage } from "@/types/storage";
+import { User } from "@prisma/client";
+
 export const API_BASE_URL = "/api/";
 
 export type paginatedResponse<T> = {
@@ -69,7 +72,7 @@ const request = async (
             user_agent: "next-server"
         }
     }
-    const localToken = storage.auth_token;
+    const localToken = storage.authToken;
 
     const auth =
         isAuth === false || typeof localToken === "undefined" || localToken === null
@@ -104,6 +107,10 @@ const request = async (
 
 export const API = {
     user: {
-
+        update: (user: Partial<User>) => request("users/me", "PATCH", user),
+        me: () => request("users/me"),
     },
+    game: {
+        fetch: (url: string) => request(`games/${url}`),
+    }
 };

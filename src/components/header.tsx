@@ -1,10 +1,14 @@
+"use client"
+
 import Link from "next/link";
 import ScriberLogo from "./logo";
-import { getUser } from "@/utils/helpers";
+import ProfilePicture from "./profilepicture";
+import { useAtom } from "jotai";
+import { storageAtom } from "@/utils/store";
 
-export default async function Header() {
+export default function Header() {
 
-    const user = await getUser();
+    const [storage, setStorage] = useAtom(storageAtom);
 
     return (
         <div className="sticky top-0 inset-x-0 flex items-center justify-between">
@@ -15,23 +19,13 @@ export default async function Header() {
                 <ScriberLogo />
             </Link>
             <div className="p-4">
-                {user ? (
+                {storage.user ? (
                     <Link
-                        href={"/user/" + user.username}
+                        href={"/user/" + storage.user.username}
                         className="flex items-center gap-2"
                     >
-                        {user.profile_picture_url ? (
-                            <img
-                                src={user.profile_picture_url}
-                                alt={user.username}
-                                className="w-8 h-8 rounded-full"
-                            />
-                        ) : (
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-900">
-                                <i className="far fa-user" />
-                            </div>
-                        )}
-                        {user.username}
+                        <ProfilePicture className="w-8" user={storage.user} />
+                        {storage.user.username}
                     </Link>
                 ) : (
                     <Link
